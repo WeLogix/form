@@ -13,13 +13,40 @@ function createForm(option = {}) {
     validateMessages,
     formPropName = 'form', withRef} = option;
 
+  function mapNextPropsToFields(props, fields) {
+    let nextFields = {};
+    if (mapPropsToFields) {
+      const fieldVal = mapPropsToFields(props);
+      Object.keys(fieldVal).forEach((name) => {
+        if (fieldVal[name] === null) {
+          return;
+        }
+        // only add props mapped fields
+        if (fields && (name in fields)) {
+          // copy original field
+          nextFields[name] = {
+            ...fields[name],
+            value: fieldVal[name]
+          };
+        } else {
+          nextFields[name] = {
+            name,
+            value: fieldVal[name]
+          };
+        }
+      });
+    } else {
+      nextFields = fields || {};
+    }
+    return nextFields;
+  }
   function decorate(WrappedComponent) {
     class Form extends Component {
       constructor(...args) {
         super(...args);
         let fields;
         if (mapPropsToFields) {
-          fields = mapPropsToFields(this.props);
+          fields = mapNextPropsToFields(this.props);
         }
         this.state = {
           submitting: false,
@@ -45,9 +72,9 @@ function createForm(option = {}) {
 
       componentWillReceiveProps(nextProps) {
         if (mapPropsToFields) {
-          const fields = mapPropsToFields(nextProps);
+          const fields = mapNextPropsToFields(nextProps, this.fields);
           if (fields) {
-            this.fields = {...this.fields, ...fields};
+            this.fields = fields;
           }
         }
       }
