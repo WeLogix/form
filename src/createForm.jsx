@@ -26,12 +26,12 @@ function createForm(option = {}) {
           // copy original field
           nextFields[name] = {
             ...fields[name],
-            value: fieldVal[name]
+            value: fieldVal[name],
           };
         } else {
           nextFields[name] = {
             name,
-            value: fieldVal[name]
+            value: fieldVal[name],
           };
         }
       });

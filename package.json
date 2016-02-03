@@ -1,5 +1,5 @@
 {
-  "name": "rc-form",
+  "name": "rc-form-wl",
   "version": "0.11.0",
   "description": "React High Order Form Component",
   "keywords": [
@@ -12,10 +12,10 @@
   "author": "yiminghe@gmail.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/react-component/form.git"
+    "url": "https://github.com/Welogix-Tech/form.git"
   },
   "bugs": {
-    "url": "https://github.com/react-component/form/issues"
+    "url": "https://github.com/Welogix-Tech/form/issues"
   },
   "files": [
     "lib",
