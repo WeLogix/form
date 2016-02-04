@@ -7,6 +7,7 @@ import Select, {Option} from 'antd/lib/select';
 import DatePicker from 'antd/lib/date-picker';
 import 'antd/lib/index.css';
 import {regionStyle, errorStyle} from './styles';
+import scrollIntoView from 'dom-scroll-into-view';
 
 function Email(props) {
   const {getFieldProps, getFieldError, isFieldValidating} = props.form;
@@ -54,7 +55,7 @@ const User = React.createClass({
     return (<div style={regionStyle}>
       <p><span style={{color: 'red'}}>*</span> user async validate</p>
       <p><input {...getFieldProps('user', {
-        initialValue: 'x',
+        validateFirst: true,
         rules: [
           {required: true},
           {validator: this.userExists},
@@ -138,6 +139,7 @@ function NumberInput(props) {
     <p>number input</p>
     <p>
       <input {...getFieldProps('number', {
+        initialValue: '1',
         rules: [{transform: toNumber, type: 'number'}],
       })}/>
     </p>
@@ -151,7 +153,46 @@ NumberInput.propTypes = {
   form: PropTypes.object,
 };
 
+function addScrollToValidate(validateFields) {
+  return (...args) => {
+    const originalCallback = args[args.length - 1];
+
+    function newCb(error, values) {
+      if (error) {
+        for (const name in error) {
+          if (error.hasOwnProperty(name) && error[name].instance) {
+            scrollIntoView(ReactDOM.findDOMNode(error[name].instance), window, {
+              onlyScrollIfNeeded: true,
+            });
+            break;
+          }
+        }
+      }
+      if (typeof originalCallback === 'function') {
+        originalCallback(error, values);
+      }
+    }
+
+    if (typeof originalCallback === 'function') {
+      args[args.length - 1] = newCb;
+    } else {
+      args.push(newCb);
+    }
+    validateFields.apply(null, args);
+  };
+}
+
 @createForm({
+  refComponent: true,
+  mapProps(props) {
+    if (!this.__scrollAndValidate) {
+      this.__scrollAndValidate = addScrollToValidate(props.form.validateFields);
+    }
+    return {
+      ...props,
+      scrollAndValidate: this.__scrollAndValidate,
+    };
+  },
   validateMessages: {
     required(field) {
       return `${field} 必填`;
@@ -161,12 +202,13 @@ NumberInput.propTypes = {
 class Form extends Component {
   static propTypes = {
     form: PropTypes.object,
+    scrollAndValidate: PropTypes.func,
   };
 
   onSubmit = (e) => {
     console.log('submit');
     e.preventDefault();
-    this.props.form.validateFields((error, values)=> {
+    this.props.scrollAndValidate((error, values)=> {
       if (!error) {
         console.log('ok', values);
       } else {
@@ -186,22 +228,22 @@ class Form extends Component {
     return (<div style={{margin: 20}}>
       <h2>overview</h2>
       <form onSubmit={this.onSubmit}>
-        <div style={regionStyle}>
-          <p>normal input, no validate</p>
-          <p>
-            <input {...getFieldProps('normal')}/>
-          </p>
-        </div>
+        <User form={form} saveRef={this.saveRef}/>
 
         <NumberInput form={form}/>
-
-        <User form={form}/>
 
         <Email form={form}/>
 
         <CustomInput form={form}/>
 
         <DateInput form={form}/>
+
+        <div style={regionStyle}>
+          <p>normal input, no validate</p>
+          <p>
+            <input {...getFieldProps('normal')}/>
+          </p>
+        </div>
 
         <div style={regionStyle}>
           <button onClick={this.reset}>reset</button>

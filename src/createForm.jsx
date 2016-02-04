@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { argumentContainer,
+import { argumentContainer, mirror,
   getValueFromEvent, getErrorStrs,
   isEmptyObject, flattenArray } from './utils';
 import AsyncValidator from 'async-validator';
@@ -10,7 +10,8 @@ const defaultTrigger = defaultValidateTrigger;
 function createForm(option = {}) {
   const {mapPropsToFields, onFieldsChange,
     fieldNameProp, fieldMetaProp,
-    validateMessages,
+    validateMessages, refComponent,
+    mapProps = mirror,
     formPropName = 'form', withRef} = option;
 
   function mapNextPropsToFields(props, fields) {
@@ -57,7 +58,7 @@ function createForm(option = {}) {
         const bindMethods = [
           'getFieldProps', 'isFieldValidating', 'submit', 'isSubmitting',
           'getFieldError', 'setFields', 'resetFields',
-          'validateFieldsByName', 'getFieldsValue',
+          'validateFieldsByName', 'getFieldsValue', 'saveRef',
           'setFieldsInitialValue', 'isFieldsValidating',
           'setFieldsValue', 'getFieldValue',
         ];
@@ -192,7 +193,9 @@ function createForm(option = {}) {
           });
         }
 
-        validateRules.map((item)=> {
+        validateRules.filter((item) => {
+          return !!item.rules && item.rules.length;
+        }).map((item)=> {
           return item.trigger;
         }).reduce((pre, curr)=> {
           return pre.concat(curr);
@@ -200,12 +203,16 @@ function createForm(option = {}) {
           inputProps[action] = this.getCacheBind(name, action, this.onChangeValidate);
         });
 
-        if (trigger && validateRules.every((item) => item.trigger.indexOf(trigger) === -1 || !item.rules)) {
+        if (trigger && validateRules.every((item) => item.trigger.indexOf(trigger) === -1 || !item.rules || !item.rules.length)) {
           inputProps[trigger] = this.getCacheBind(name, trigger, this.onChange);
         }
         const field = this.getField(name);
         if (field && 'value' in field) {
           inputProps[valuePropName] = field.value;
+        }
+
+        if (refComponent) {
+          inputProps.ref = this.getCacheBind(name, name + '__ref', this.saveRef);
         }
 
         const meta = {
@@ -348,10 +355,22 @@ function createForm(option = {}) {
         }
       }
 
+      saveRef(name, _, component) {
+        const fieldMeta = this.getFieldMeta(name);
+        if (fieldMeta && fieldMeta.ref) {
+          if (typeof fieldMeta.ref === 'string') {
+            throw new Error('can not set ref string for ' + name);
+          }
+          fieldMeta.ref(component);
+        }
+        this.fields[name] = this.fields[name] || {};
+        this.fields[name].instance = component;
+      }
+
       hasRules(validate) {
         if (validate) {
           return validate.some((item)=> {
-            return !!item.rules;
+            return !!item.rules && item.rules.length;
           });
         }
         return false;
@@ -366,7 +385,10 @@ function createForm(option = {}) {
           const name = field.name;
           if (options.force !== true && field.dirty === false) {
             if (field.errors) {
-              alreadyErrors[name] = field.errors;
+              alreadyErrors[name] = {
+                errors: field.errors,
+                instance: field.instance,
+              };
             }
             return;
           }
@@ -397,9 +419,9 @@ function createForm(option = {}) {
           if (errors && errors.length) {
             errors.forEach((e) => {
               const fieldName = e.field;
-              const fieldErrors = errorsGroup[fieldName] || [];
+              errorsGroup[fieldName] = errorsGroup[fieldName] || {errors: []};
+              const fieldErrors = errorsGroup[fieldName].errors;
               fieldErrors.push(e);
-              errorsGroup[fieldName] = fieldErrors;
             });
           }
           const expired = [];
@@ -409,22 +431,28 @@ function createForm(option = {}) {
             const nowField = this.getField(name, true);
             // avoid concurrency problems
             if (nowField.value !== allValues[name]) {
-              expired.push(name);
+              expired.push({name, instance: nowField.instance});
             } else {
-              nowField.errors = fieldErrors;
+              nowField.errors = fieldErrors && fieldErrors.errors;
               nowField.value = allValues[name];
               nowField.validating = false;
               nowField.dirty = false;
               nowAllFields[name] = nowField;
             }
+            if (fieldErrors) {
+              fieldErrors.instance = nowField.instance;
+            }
           });
           this.setFields(nowAllFields);
           if (callback) {
             if (expired.length) {
-              expired.forEach((name) => {
-                errorsGroup[name] = [new Error(`${name} need to revalidate`)];
-                errorsGroup[name][0].field = name;
-                errorsGroup[name].expired = true;
+              expired.forEach(({name, instance}) => {
+                const fieldErrors = [{message: `${name} need to revalidate`, field: name}];
+                errorsGroup[name] = {
+                  expired: true,
+                  instance,
+                  errors: fieldErrors,
+                };
               });
             }
             callback(isEmptyObject(errorsGroup) ? null : errorsGroup, this.getFieldsValue(fieldNames));
@@ -534,7 +562,11 @@ function createForm(option = {}) {
         if (withRef) {
           formProps.ref = 'wrappedComponent';
         }
-        return <WrappedComponent {...formProps} {...this.props}/>;
+        const props = mapProps.call(this, {
+          ...formProps,
+          ...this.props,
+        });
+        return <WrappedComponent {...props}/>;
       }
     }
 
