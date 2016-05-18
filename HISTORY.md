@@ -1,5 +1,19 @@
 # History
 ----
+
+## 0.15.0 / 2016-03-28
+
+- add getValueFromEvent/getValueProps
+
+
+## 0.14.0 / 2016-02-27
+
+- remove refComponent prop.(defaults to true), so you must use getFieldInstance method to get instance instead of ref
+
+## 0.13.0 / 2016-02-14
+
+- support rc-form/lib/createDOMForm
+
 ## 0.12.0 / 2016-02-02
 
 - support refComponent/mapProps option for createForm to scroll error fields into view.

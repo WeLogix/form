@@ -3,8 +3,8 @@
 import expect from 'expect.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {createForm} from '../';
-import {Simulate} from 'react-addons-test-utils';
+import { createForm } from '../';
+import { Simulate } from 'react-addons-test-utils';
 
 describe('message usage', () => {
   let container;
@@ -28,11 +28,14 @@ describe('message usage', () => {
       },
 
       render() {
-        const {getFieldProps} = this.props.form;
+        const { getFieldProps } = this.props.form;
         return (<div>
           <input {...getFieldProps('required', {
-            rules: [{required: true}],
-          })} ref="required"/>
+            rules: [{
+              required: true,
+            }],
+          })}
+          />
         </div>);
       },
     });
@@ -45,7 +48,7 @@ describe('message usage', () => {
     component = ReactDOM.render(<Test />, container);
     component = component.refs.wrappedComponent;
     form = component.props.form;
-    Simulate.change(component.refs.required);
+    Simulate.change(form.getFieldInstance('required'));
     expect(form.getFieldError('required').length).to.be(1);
     expect(form.getFieldError('required')[0]).to.be('required required!');
   });
@@ -57,11 +60,15 @@ describe('message usage', () => {
       },
 
       render() {
-        const {getFieldProps} = this.props.form;
+        const { getFieldProps } = this.props.form;
         return (<div>
           <input {...getFieldProps('required', {
-            rules: [{required: true, message: <b>1</b>}],
-          })} ref="required"/>
+            rules: [{
+              required: true,
+              message: <b>1</b>,
+            }],
+          })}
+          />
         </div>);
       },
     });
@@ -71,7 +78,7 @@ describe('message usage', () => {
     component = ReactDOM.render(<Test />, container);
     component = component.refs.wrappedComponent;
     form = component.props.form;
-    Simulate.change(component.refs.required);
+    Simulate.change(form.getFieldInstance('required'));
     expect(form.getFieldError('required').length).to.be(1);
     expect(form.getFieldError('required')[0].type).to.be('b');
   });

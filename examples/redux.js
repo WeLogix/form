@@ -1,12 +1,12 @@
 /* eslint react/no-multi-comp:0, no-console:0 */
 
 import { createForm } from 'rc-form';
-import React, {Component, PropTypes} from 'react';
+import React, { Component, PropTypes } from 'react';
 import { combineReducers } from 'redux';
 import { createStore } from 'redux';
 import { Provider, connect } from 'react-redux';
 import ReactDOM from 'react-dom';
-import {regionStyle, errorStyle} from './styles';
+import { regionStyle, errorStyle } from './styles';
 
 function form(state = {
   email: {
@@ -24,28 +24,6 @@ function form(state = {
   }
 }
 
-@connect((state) => {
-  return {
-    formState: {
-      email: state.form.email,
-    },
-  };
-})
-@createForm({
-  mapPropsToFields(props) {
-    console.log('mapPropsToFields', props);
-    return {
-      email: props.formState.email,
-    };
-  },
-  onFieldsChange(props, fields) {
-    console.log('onFieldsChange', fields);
-    props.dispatch({
-      type: 'save_fields',
-      payload: fields,
-    });
-  },
-})
 class Form extends Component {
   static propTypes = {
     form: PropTypes.object,
@@ -54,13 +32,15 @@ class Form extends Component {
   render() {
     const { getFieldProps, getFieldError } = this.props.form;
     const errors = getFieldError('email');
-    return (<div style={regionStyle}>
+    return (<div style={ regionStyle }>
       <p>email:</p>
-      <p><input {...getFieldProps('email', {
-        rules: [{
-          type: 'email',
-        }],
-      })}/></p>
+      <p>
+        <input {...getFieldProps('email', {
+          rules: [{
+            type: 'email',
+          }],
+        })}
+        /></p>
       <p style={errorStyle}>
         {(errors) ? errors.join(',') : null}
       </p>
@@ -86,8 +66,8 @@ let Out = React.createClass({
   },
 
   render() {
-    const {email} = this.props;
-    return (<div style={regionStyle}>
+    const { email } = this.props;
+    return (<div style={ regionStyle }>
       <p>
         email: {email && email.value}
       </p>
@@ -102,14 +82,38 @@ Out = connect((state) => {
   };
 })(Out);
 
-const store = createStore(combineReducers({form}));
+const store = createStore(combineReducers({
+  form,
+}));
+
+const NewForm = connect((state) => {
+  return {
+    formState: {
+      email: state.form.email,
+    },
+  };
+})(createForm({
+  mapPropsToFields(props) {
+    console.log('mapPropsToFields', props);
+    return {
+      email: props.formState.email,
+    };
+  },
+  onFieldsChange(props, fields) {
+    console.log('onFieldsChange', fields);
+    props.dispatch({
+      type: 'save_fields',
+      payload: fields,
+    });
+  },
+})(Form));
 
 class App extends React.Component {
   render() {
     return (<Provider store={store}>
       <div>
         <h2>integrate with redux</h2>
-        <Form />
+        <NewForm />
         <Out />
       </div>
     </Provider>);

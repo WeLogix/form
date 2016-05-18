@@ -1,8 +1,8 @@
 import expect from 'expect.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {createForm} from '../';
-import {Simulate} from 'react-addons-test-utils';
+import { createForm } from '../';
+import { Simulate } from 'react-addons-test-utils';
 
 let Test = React.createClass({
   propTypes: {
@@ -10,11 +10,13 @@ let Test = React.createClass({
   },
 
   force(rule, value, callback) {
-    this.props.form.validateFields(['check'], {force: true}, (errors) => {
+    this.props.form.validateFields(['check'], {
+      force: true,
+    }, (errors) => {
       if (errors) {
-        const es = Object.keys(errors).map((name)=> {
+        const es = Object.keys(errors).map((name) => {
           return errors[name].errors;
-        }).reduce((result, current)=> {
+        }).reduce((result, current) => {
           return result.concat.apply(result, current);
         }, []);
         callback(es);
@@ -33,16 +35,18 @@ let Test = React.createClass({
   },
 
   render() {
-    const {getFieldProps} = this.props.form;
+    const { getFieldProps } = this.props.form;
     return (<div>
-      <input {...getFieldProps('normal')} ref="normal"/>
+      <input {...getFieldProps('normal')} />
       <input {...getFieldProps('check', {
         rules: [this.check],
-      })} ref="check"/>
+      })}
+      />
       <input {...getFieldProps('force', {
         rules: [this.force],
         validateTrigger: false,
-      })} ref="force"/>
+      })}
+      />
     </div>);
   },
 });
@@ -70,13 +74,14 @@ describe('async usage', () => {
   });
 
   it('forceValidate works', (done) => {
-    component.refs.check.value = '1';
-    Simulate.change(component.refs.check);
+    form.getFieldInstance('check').value = '1';
+    Simulate.change(form.getFieldInstance('check'));
     expect(form.getFieldError('check')).not.to.be.ok();
-    component.refs.force.value = '11';
-    Simulate.change(component.refs.force);
+    form.getFieldInstance('force').value = '11';
+    Simulate.change(form.getFieldInstance('force'));
     expect(form.getFieldError('check')).not.to.be.ok();
     form.validateFields((errors) => {
+      expect(errors).to.be.ok();
       expect(Object.keys(errors).length).to.be(1);
       expect(form.getFieldError('check')).to.eql(['error']);
       expect(errors.check.errors.map(e => e.message)).to.eql(['error']);

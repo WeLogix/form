@@ -1,21 +1,28 @@
 /* eslint react/no-multi-comp:0, no-console:0 */
 
-import {createForm} from 'rc-form';
-import React, {Component, PropTypes} from 'react';
+import { createForm } from 'rc-form';
+import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
-import {regionStyle, errorStyle} from './styles';
+import { regionStyle, errorStyle } from './styles';
 
 function Email(props) {
-  const {getFieldProps, getFieldError} = props.form;
+  const { getFieldProps, getFieldError } = props.form;
   const errors = getFieldError('email');
-  return (<div style={regionStyle}>
+  return (<div style={ regionStyle }>
     <p>email sync validate</p>
-    <p><input {...getFieldProps('email', {
-      rules: [
-        {required: true},
-        {type: 'email', message: '错误的 email 格式'},
-      ],
-    })}/></p>
+    <p>
+      <input {...getFieldProps('email', {
+        rules: [
+          {
+            required: true,
+          },
+          {
+            type: 'email',
+            message: '错误的 email 格式',
+          },
+        ],
+      })}
+      /></p>
     <p style={errorStyle}>
       {errors ? errors.join(',') : null}
     </p>
@@ -32,13 +39,18 @@ const User = React.createClass({
   },
 
   render() {
-    const {getFieldProps, getFieldError} = this.props.form;
+    const { getFieldProps, getFieldError } = this.props.form;
     const errors = getFieldError('user');
-    return (<div style={regionStyle}>
+    return (<div style={ regionStyle }>
       <p>user async validate</p>
-      <p><input {...getFieldProps('user', {
-        rules: [{required: true}],
-      })}/></p>
+      <p>
+        <input {...getFieldProps('user', {
+          rules: [{
+            required: true,
+          }],
+        })}
+        />
+      </p>
       <p style={errorStyle}>
         {(errors) ? errors.join(',') : null}
       </p>
@@ -46,7 +58,6 @@ const User = React.createClass({
   },
 });
 
-@createForm()
 class Form extends Component {
   static propTypes = {
     form: PropTypes.object,
@@ -54,16 +65,16 @@ class Form extends Component {
 
   onSubmit = (e) => {
     e.preventDefault();
-    this.props.form.validateFields((error, values)=> {
+    this.props.form.validateFields((error, values) => {
       if (!error) {
         console.log('ok', values);
-        setTimeout(()=> {
+        setTimeout(() => {
           // server validate
           if (values.user === 'yiminghe') {
             this.props.form.setFields({
               user: {
                 value: values.user,
-                errors: ['forbid ha'],
+                errors: [new Error('forbid ha')],
               },
             });
           }
@@ -75,15 +86,15 @@ class Form extends Component {
   };
 
   render() {
-    const {form} = this.props;
-    return (<div style={{margin: 20}}>
+    const { form } = this.props;
+    return (<div style={{ margin: 20 }}>
       <h2>setFields</h2>
       <form onSubmit={this.onSubmit}>
-        <User form={form}/>
+        <User form={ form }/>
 
-        <Email form={form}/>
+        <Email form={ form }/>
 
-        <div style={regionStyle}>
+        <div style={ regionStyle }>
           <button>submit</button>
         </div>
       </form>
@@ -91,4 +102,6 @@ class Form extends Component {
   }
 }
 
-ReactDOM.render(<Form />, document.getElementById('__react-content'));
+const NewForm = createForm()(Form);
+
+ReactDOM.render(<NewForm />, document.getElementById('__react-content'));

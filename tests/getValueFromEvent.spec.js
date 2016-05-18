@@ -1,23 +1,29 @@
 import expect from 'expect.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {createForm} from '../';
-import {Simulate} from 'react-addons-test-utils';
+import { createForm } from '../';
+import { Simulate } from 'react-addons-test-utils';
 
 let Test = React.createClass({
   propTypes: {
     form: React.PropTypes.object,
   },
-  upper(v) {
-    return v && v.toUpperCase();
-  },
 
   render() {
-    const {getFieldProps} = this.props.form;
+    const { getFieldProps } = this.props.form;
     return (<div>
       <input {...getFieldProps('normal', {
-        normalize: this.upper,
-      })} ref="normal"/>
+        getValueProps(v) {
+          return {
+            value: `${v}1`,
+          };
+        },
+        initialValue: '0',
+        getValueFromEvent(e) {
+          return `${e.target.value}2`;
+        },
+      })}
+      />
     </div>);
   },
 });
@@ -26,7 +32,7 @@ Test = createForm({
   withRef: true,
 })(Test);
 
-describe('normalize usage', () => {
+describe('getValueFromEvent usage', () => {
   let container;
   let component;
   let form;
@@ -45,9 +51,12 @@ describe('normalize usage', () => {
   });
 
   it('works', () => {
-    component.refs.normal.value = 'a';
-    Simulate.change(component.refs.normal);
-    expect(form.getFieldValue('normal')).to.be('A');
-    expect( component.refs.normal.value).to.be('A');
+    form.getFieldInstance('normal').value = '3';
+    Simulate.change(form.getFieldInstance('normal'));
+    expect(form.getFieldValue('normal')).to.be('32');
+    expect(form.getFieldInstance('normal').value).to.be('321');
+    form.resetFields();
+    expect(form.getFieldValue('normal')).to.be('0');
+    expect(form.getFieldInstance('normal').value).to.be('01');
   });
 });

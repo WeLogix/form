@@ -81,10 +81,6 @@ preset messages of [async-validator](https://github.com/yiminghe/async-validator
 
 Get new props transfered to WrappedComponent. Defaults to props=>props.
 
-### formOption.refComponent: Boolean
-
-Defaults to false. Whether save component as ref. Can get instance from validateFields's callback parameter by instance member.
-
 ### formOption.onFieldsChange(props, fields)
 
 Called when field changed, you can dispatch fields to redux store.
@@ -111,7 +107,31 @@ This input's unique name.
 
 #### option.valuePropName: String
 
-Prop name of component's value field, eg: checkbox should be set ti `checked` ... 
+Prop name of component's value field, eg: checkbox should be set to `checked` ...
+
+#### option.getValueFromEvent
+
+Specify how to get value from event. Defaults to
+
+```js
+function (e) {
+  if (!e || !e.target) {
+    return e;
+  }
+  const { target } = e;
+  return target.type === 'checkbox' ? target.checked : target.value;
+}
+```
+
+#### option.getValueProps
+
+get the component props according to field value. Defaults to
+
+```js
+function (value) {
+  return { value };
+}
+```
 
 #### option.initialValue
 
@@ -156,8 +176,6 @@ Validator rules. see: [async-validator](https://github.com/yiminghe/async-valida
 
 Defaults to false. whether stop validate on first rule of error for this field.
 
-
-
 ### getFieldsValue([fieldNames: String[]])
 
 Get fields value by fieldNames.
@@ -165,6 +183,10 @@ Get fields value by fieldNames.
 ### getFieldValue(fieldName: String)
 
 Get field value by fieldName.
+
+### getFieldInstance(fieldName: String)
+
+Get field react public instance by fieldName.
 
 ### setFieldsValue(obj: Object)
 
@@ -213,13 +235,58 @@ Cause isSubmitting to return true, after callback called, isSubmitting return fa
 
 Reset specified inputs. Defaults to all.
 
+## rc-form/lib/createDOMForm(formOption): Function
+
+createForm enhancement, support props.form.validateFieldsAndScroll
+
+### props.form.validateFieldsAndScroll([fieldNames: String[]], [options: Object], callback: Function(errors, values))
+
+props.form.validateFields enhancement, support scroll to the first invalid form field
+
+#### options.container: HTMLElement
+
+Defaults to first scrollable container of form field(until document).
+
+## Notes
+
+- you can not set same prop name as the value of validateTrigger/trigger.
+
+```js
+<input {...getFieldProps('change',{
+  onChange: this.iWantToKnow // you must set onChange here
+})}>
+```
+
+- you can not use ref prop.
+
+```js
+<input {...getFieldProps('ref')} />
+
+this.props.form.getFieldInstance('ref') // use this to get ref
+```
+
+or
+
+```js
+<input {...getFieldProps('ref',{
+  ref: this.saveRef // or use function here
+})} />
+```
+
 ## Test Case
 
-http://localhost:8000/tests/runner.html?coverage
+```
+npm test
+npm run chrome-test
+```
 
 ## Coverage
 
-http://localhost:8000/node_modules/node-jscover/lib/front-end/jscoverage.html?w=http://localhost:8000/tests/runner.html?coverage
+```
+npm run coverage
+```
+
+open coverage/ dir
 
 ## License
 

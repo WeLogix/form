@@ -1,29 +1,40 @@
 /* eslint react/no-multi-comp:0, no-console:0 */
 
 import { createForm } from 'rc-form';
-import React, {PropTypes} from 'react';
-import {createRootContainer, createContainer} from 'react-data-binding';
+import React, { PropTypes } from 'react';
+import { createRootContainer, createContainer } from 'react-data-binding';
 import ReactDOM from 'react-dom';
-import {regionStyle} from './styles';
+import { regionStyle } from './styles';
 import Switch from 'antd/lib/switch';
 import 'antd/lib/index.css';
 
-const TopForm = React.createClass({
+const createFormContainer = createContainer((state) => {
+  return {
+    on: ((state.formState || {}).on || {}).value || false,
+  };
+});
+
+let TopForm = React.createClass({
   propTypes: {
     form: PropTypes.object,
+    on: PropTypes.bool,
   },
 
   render() {
-    const { getFieldProps } = this.props.form;
-    return (<div style={regionStyle}>
+    const { form, on } = this.props;
+    const { getFieldProps } = form;
+    return (<div style={ regionStyle }>
       <p>has email? </p>
-      <p><Switch {...getFieldProps('on', {
-        initialValue: true,
-        valuePropName: 'checked',
-      })}/></p>
+      <p>
+        <Switch {...getFieldProps('on', {
+          initialValue: on,
+          valuePropName: 'checked',
+        })}
+        /></p>
     </div>);
   },
 });
+TopForm = createFormContainer(TopForm);
 
 let BottomForm = React.createClass({
   propTypes: {
@@ -32,26 +43,26 @@ let BottomForm = React.createClass({
   },
 
   render() {
-    const {form, on} = this.props;
+    const { form, on } = this.props;
     const style = {
       ...regionStyle,
       display: on ? 'block' : 'none',
     };
-    return (<div style={style}>
+    return (<div style={ style }>
       <p>email: </p>
-      <p><input {...form.getFieldProps('email', {
-        rules: [{type: 'email'}],
-        hidden: !on,
-      })}/></p>
+      <p>
+        <input {...form.getFieldProps('email', {
+          rules: [{
+            type: 'email',
+          }],
+          hidden: !on,
+        })}
+        /></p>
     </div>);
   },
 });
 
-BottomForm = createContainer((state) => {
-  return {
-    on: ((state.formState || {}).on || {}).value || false,
-  };
-})(BottomForm);
+BottomForm = createFormContainer(BottomForm);
 
 let Form = React.createClass({
   propTypes: {
@@ -62,11 +73,11 @@ let Form = React.createClass({
     console.log(this.props.form.getFieldsValue());
   },
   render() {
-    const {form} = this.props;
+    const { form } = this.props;
     return (<div>
-      <TopForm form={form}/>
-      <BottomForm form={form}/>
-      <div style={regionStyle}>
+      <TopForm form={ form }/>
+      <BottomForm form={ form }/>
+      <div style={ regionStyle }>
         <button onClick={this.onSubmit}>submit</button>
       </div>
     </div>);
@@ -95,7 +106,6 @@ Form = createContainer((state) => {
   };
 })(Form);
 
-@createRootContainer()
 class App extends React.Component {
   render() {
     return (<div>
@@ -105,4 +115,10 @@ class App extends React.Component {
   }
 }
 
-ReactDOM.render(<App />, document.getElementById('__react-content'));
+const NewApp = createRootContainer({
+  formState: {
+    on: { value: true },
+  },
+})(App);
+
+ReactDOM.render(<NewApp />, document.getElementById('__react-content'));
